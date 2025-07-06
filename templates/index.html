@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .weather-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .current-weather {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+        }
+        
+        .daily-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 15px;
+            transition: transform 0.3s ease;
+        }
+        
+        .daily-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .hourly-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .hourly-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .weather-icon {
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+        
+        .search-form {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-weather {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-weather:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .temperature-large {
+            font-size: 4rem;
+            font-weight: 300;
+        }
+        
+        .city-name {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h1 class="text-white fw-bold">
+                <i class="fas fa-cloud-sun me-2"></i>
+                Weather Dashboard
+            </h1>
+            <p class="text-white-50">Get current weather and 5-day forecast</p>
+        </div>
+        
+        <!-- Search Form -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-6">
+                <div class="search-form p-4">
+                    <form method="POST">
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-lg" 
+                                   name="city" placeholder="Enter city name..." required>
+                            <button class="btn btn-weather btn-lg text-white" type="submit">
+                                <i class="fas fa-search me-2"></i>Get Weather
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="row justify-content-center mb-4">
+                    <div class="col-md-8">
+                        {% for message in messages %}
+                            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% if weather_data %}
+        <!-- Current Weather -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-10">
+                <div class="current-weather p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="city-name">{{ city_name }}</div>
+                            <div class="temperature-large">{{ weather_data.current.temperature }}°C</div>
+                            <div class="h5 mb-3">{{ weather_data.current.description }}</div>
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <i class="fas fa-thermometer-half"></i>
+                                    <div>Feels like</div>
+                                    <div class="fw-bold">{{ weather_data.current.feels_like }}°C</div>
+                                </div>
+                                <div class="col-4">
+                                    <i class="fas fa-tint"></i>
+                                    <div>Humidity</div>
+                                    <div class="fw-bold">{{ weather_data.current.humidity }}%</div>
+                                </div>
+                                <div class="col-4">
+                                    <i class="fas fa-wind"></i>
+                                    <div>Wind</div>
+                                    <div class="fw-bold">{{ weather_data.current.wind_speed }} m/s</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <img src="http://openweathermap.org/img/wn/{{ weather_data.current.icon }}@4x.png" 
+                                 alt="{{ weather_data.current.description }}" 
+                                 class="weather-icon img-fluid" style="max-width: 200px;">
+                            <div class="mt-2">
+                                <small>{{ weather_data.current.datetime }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 5-Day Forecast -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-10">
+                <div class="weather-card p-4">
+                    <h3 class="mb-4 text-center">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        5-Day Forecast
+                    </h3>
+                    <div class="row g-3">
+                        {% for day in weather_data.daily %}
+                        <div class="col-md-2-4 col-sm-6">
+                            <div class="daily-card p-3 text-center h-100">
+                                <div class="fw-bold mb-2">{{ day.date }}</div>
+                                <img src="http://openweathermap.org/img/wn/{{ day.icon }}@2x.png" 
+                                     alt="{{ day.description }}" 
+                                     class="weather-icon mb-2" style="width: 60px;">
+                                <div class="mb-2">{{ day.description }}</div>
+                                <div class="h5 mb-2">
+                                    <span class="fw-bold">{{ day.temp_max }}°</span>
+                                    <span class="opacity-75">{{ day.temp_min }}°</span>
+                                </div>
+                                <div class="small">
+                                    <div><i class="fas fa-tint me-1"></i>{{ day.humidity }}%</div>
+                                    <div><i class="fas fa-wind me-1"></i>{{ day.wind_speed }} m/s</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hourly Forecast -->
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="weather-card p-4">
+                    <h3 class="mb-4 text-center">
+                        <i class="fas fa-clock me-2"></i>
+                        24-Hour Forecast
+                    </h3>
+                    <div class="row g-2" style="max-height: 300px; overflow-y: auto;">
+                        {% for hour in weather_data.hourly %}
+                        <div class="col-md-2 col-sm-3 col-4">
+                            <div class="hourly-item p-2 text-center">
+                                <div class="small fw-bold">{{ hour.time }}</div>
+                                <img src="http://openweathermap.org/img/wn/{{ hour.icon }}.png" 
+                                     alt="{{ hour.description }}" 
+                                     class="weather-icon" style="width: 30px;">
+                                <div class="fw-bold">{{ hour.temperature }}°</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Footer -->
+        <div class="text-center mt-5">
+            <p class="text-white-50">
+                <i class="fas fa-info-circle me-1"></i>
+                Powered by OpenWeatherMap API
+            </p>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <style>
+        /* Custom CSS for 5 equal columns */
+        .col-md-2-4 {
+            flex: 0 0 20%;
+            max-width: 20%;
+        }
+        
+        @media (max-width: 768px) {
+            .col-md-2-4 {
+                flex: 0 0 50%;
+                max-width: 50%;
+            }
+        }
+    </style>
+</body>
+</html>
